@@ -1,0 +1,140 @@
+import pyttsx3
+import googlemaps
+import speech_recognition as sr
+from googletrans import Translator
+from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
+from geopy.geocoders import Nominatim
+from googletrans import Translator
+
+app = Flask(__name__)
+CORS(app)
+# Google Maps API key
+gmaps = googlemaps.Client(key='AIzaSyDMr8KZNq76ugLFypas2l8Rn3bj1M8AETI')
+
+# Text-to-Speech engine
+engine = pyttsx3.init()
+
+# Translator instance
+translator = Translator()
+
+# Initialize travel buddy database (for demonstration purposes, you would use a real database in production)
+travel_buddies = []
+
+# Route for home page
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+# API to check nearby accessibility issues (stairs, narrow doorways, etc.)
+@app.route('/check-accessibility', methods=['POST'])
+def check_accessibility():
+    location = request.json.get('location')
+    lat, lon = location['lat'], location['lon']
+
+    # Get nearby places using Google Places API (this is a basic implementation, you can refine it)
+    places = gmaps.places_nearby((lat, lon), radius=1000)
+    
+    accessible_data = {
+        "stairways": [],
+        "narrow_doorways": [],
+        "uneven_surfaces": [],
+        "steep_inclines": [],
+    }
+
+    for place in places['results']:
+        if "stairway" in place['name'].lower():
+            accessible_data["stairways"].append(place['name'])
+        if "narrow" in place['name'].lower():
+            accessible_data["narrow_doorways"].append(place['name'])
+
+    return jsonify(accessible_data)
+
+@app.route('/text-to-speech', methods=['POST'])
+def text_to_speech():
+    text = request.json.get('text')
+    language = request.json.get('language', 'en')
+
+    engine.setProperty('voice', language)
+    engine.setProperty('rate', 150)
+    engine.setProperty('volume', 1)
+    engine.save_to_file(text, 'output.mp3')
+    engine.runAndWait()
+    return jsonify({"message": "Text-to-speech conversion successful"})
+
+# API to convert speech to text
+@app.route('/speech-to-text', methods=['POST'])
+def speech_to_text():
+    recognizer = sr.Recognizer()
+    mic = sr.Microphone()
+
+    with mic as source:
+        recognizer.adjust_for_ambient_noise(source)
+        print("Please speak...")
+        audio = recognizer.listen(source)
+
+    import speech_recognition as sr
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Adjusting for ambient noise...")
+    recognizer.adjust_for_ambient_noise(source)
+    
+    print("Listening for speech...")
+    # Listen to the user's speech
+    audio = recognizer.listen(source)
+    
+    try:
+        print("Recognizing...")
+        # Use Google's speech recognition to convert speech to text
+        text = recognizer.recognize_google(audio)
+        print("You said: " + text)
+    except sr.UnknownValueError:
+        print("Sorry, I could not understand the audio.")
+    except sr.RequestError:
+        print("Sorry, there was an issue with the speech service.")
+
+
+def translate_text(text, target_language):
+    # Initialize the Translator object
+    translator = Translator()
+    
+    # Translate the text
+    translated = translator.translate(text, dest=target_language)
+    
+    # Return the translated text
+    return translated.text
+
+# Define the API endpoint for translation
+@app.route('/translate', methods=['POST'])
+def translate_api():
+    try:
+        # Get the data from the incoming POST request
+        data = request.get_json()
+        
+        # Extract the 'text' and 'target_language' from the request data
+        text = data.get('text')
+        target_language = data.get('target_language')
+        
+        if not text or not target_language:
+            return jsonify({"error": "Text and target_language are required"}), 400
+        
+        # Call the translate_text function
+        translated_text = translate_text(text, target_language)
+        
+        # Return the translated text in JSON format
+        return jsonify({"translated_text": translated_text}), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# API to send an emergency alert (play sound and notify users)
+@app.route('/emergency', methods=['POST'])
+def emergency():
+    location = request.json.get('location')
+    # Here you could notify emergency contacts or trigger a sound on the frontend
+    return jsonify({"message": "Emergency alert triggered!"})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+

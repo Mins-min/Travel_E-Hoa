@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRAVEL E HAO</title>
+    <head> TRAVEL E HAO</head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        head {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            text-align: center;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            width: 300px;
+        }
+        #result { 
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+        <!-- Form to convert text to speech -->
+        <h3>Convert Text to Speech</h3>
+        <textarea id="text-to-speech-input" placeholder="Enter text to convert to speech" rows="4" cols="50"></textarea>
+        <br>
+        <button onclick="textToSpeech()">Convert Text to Speech</button>
+
+        <!-- Form to convert speech to text -->
+        <h3>Convert Speech to Text</h3>
+        <button onclick="speechToText()">Start Speech Recognition</button>
+
+        <!-- Form to translate text -->
+        <h3>Translate Text</h3>
+        <textarea id="text-to-translate" placeholder="Enter text to translate" rows="4" cols="50"></textarea>
+        <br>
+        <label for="target-lang">Target Language:</label>
+        <input type="text" id="target-lang" placeholder="Enter target language (e.g., 'es' for Spanish)">
+        <br>
+        <button onclick="translateText()">Translate Text</button>
+
+        <button type="button" onclick=playAlert()>Send Emergency Alert</button>
+
+        <audio id="alertAudio">
+            <source src="alert.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:5000'; // Change to your Flask server URL if different
+
+        // Function to check accessibility issues
+        function playAlert() {
+            var audio = document.getElementById('alertAudio');
+            audio.play().then(function() {
+                console.log("Audio is playing");
+            }).catch(function(error) {
+                console.error("Error playing audio: ", error);
+            });
+        }       
+
+        // Function to convert text to speech
+        function textToSpeech() {
+            const text = document.getElementById('text-to-speech-input').value;
+            const data = {
+                text: text
+            };
+
+            fetch(apiUrl + '/text-to-speech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('result').innerHTML = 'Text-to-speech conversion successful!';
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = 'Error: ' + error;
+            });
+        }
+
+        // Function to convert speech to text
+        function speechToText() {
+            fetch(apiUrl + '/speech-to-text', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('result').innerHTML = 'You said: ' + result.transcribed_text;
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = 'Error: ' + error;
+            });
+        }
+
+        // Function to translate text
+        async function translateText() {
+            // Get the text and target language from the input fields
+            const text = document.getElementById('text-to-translate').value;
+            const targetLanguage = document.getElementById('target-language').value;
+
+            // Create the request payload
+            const data = {
+                text: text,
+                target_language: targetLanguage
+            };
+
+            try {
+                // Send the POST request to the Flask API
+                const response = await fetch('http://127.0.0.1:5000/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                // Parse the JSON response from the Flask API
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Display the translated text
+                    document.getElementById('result').innerHTML = `Translated Text: ${result.translated_text}`;
+                } else {
+                    // Display an error message
+                    document.getElementById('result').innerHTML = `Error: ${result.error}`;
+                }
+            } catch (error) {
+                // Handle errors
+                document.getElementById('result').innerHTML = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div style="width: 50%; margin: 0 auto; padding: 20px; text-align: center;">
+        <h2>Text Translation</h2>
+
+        <!-- Text to translate -->
+        <textarea id="text-to-translate" placeholder="Enter text to translate" rows="4" cols="50"></textarea><br><br>
+
+        <!-- Target language input -->
+        <label for="target-language">Target Language:</label>
+        <input type="text" id="target-language" placeholder="Enter target language (e.g., 'es' for Spanish)" required><br><br>
+
+        <!-- Translate button -->
+        <button onclick="translateText()">Translate</button>
+
+        <!-- Area to display the result -->
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+</body>
+</html>
+
+        // Function to send emergency alert
+        function sendEmergencyAlert() {
+            const data = {
+                location: {
+                    lat: 40.748817,
+                    lon: -73.985428 // Example coordinates (Empire State Building)
+                }
+            };
+
+            fetch(apiUrl + '/emergency', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('result').innerHTML = result.message;
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = 'Error: ' + error;
+            });
+        }
+    </script>
+</body>
+</html>
+
