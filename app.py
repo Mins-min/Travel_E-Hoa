@@ -85,15 +85,6 @@ def translate_api():
         
         if not text or not target_language:
             return jsonify({"error": "Text and target_language are required"}), 400
-        
-        # Call the translate_text function
-        translated_text = translate_text(text, target_language)
-        
-        # Return the translated text in JSON format
-        return jsonify({"translated_text": translated_text}), 200
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 # API to send an emergency alert (play sound and notify users)
