@@ -18,38 +18,6 @@ engine = pyttsx3.init()
 # Translator instance
 translator = Translator()
 
-# Initialize travel buddy database (for demonstration purposes, you would use a real database in production)
-travel_buddies = []
-
-# Route for home page
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# API to check nearby accessibility issues (stairs, narrow doorways, etc.)
-@app.route('/check-accessibility', methods=['POST'])
-def check_accessibility():
-    location = request.json.get('location')
-    lat, lon = location['lat'], location['lon']
-
-    # Get nearby places using Google Places API (this is a basic implementation, you can refine it)
-    places = gmaps.places_nearby((lat, lon), radius=1000)
-    
-    accessible_data = {
-        "stairways": [],
-        "narrow_doorways": [],
-        "uneven_surfaces": [],
-        "steep_inclines": [],
-    }
-
-    for place in places['results']:
-        if "stairway" in place['name'].lower():
-            accessible_data["stairways"].append(place['name'])
-        if "narrow" in place['name'].lower():
-            accessible_data["narrow_doorways"].append(place['name'])
-
-    return jsonify(accessible_data)
-
 @app.route('/text-to-speech', methods=['POST'])
 def text_to_speech():
     text = request.json.get('text')
